@@ -39,20 +39,14 @@ class UsersRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return Users[] Returns an array of Users objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('u')
-//            ->andWhere('u.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('u.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+   public function findAllUsers(): array
+   {
+       return $this->createQueryBuilder('u')
+            ->select("u.name, u.lastname, u.address, u.phone, u.birthdayDate, u.sex, u.roles")
+           ->getQuery()
+           ->getResult()
+       ;
+   }
 
 //    public function findOneBySomeField($value): ?Users
 //    {

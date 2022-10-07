@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\SaleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -12,33 +13,51 @@ use Symfony\Component\Uid\Uuid;
 class Sale
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'uuid', unique: true)]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createAt = null;
+    #[ORM\ManyToOne(inversedBy: 'sales')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Users $user = null;
 
-    #[ORM\OneToMany(mappedBy: 'sale', targetEntity: Book::class)]
-    private Collection $books;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $createAt = null;
+
+    #[ORM\OneToMany(mappedBy: 'sale', targetEntity: ItemSale::class)]
+    private Collection $itemSales;
 
     public function __construct()
     {
-        $this->books = new ArrayCollection();
+        $this->itemSales = new ArrayCollection();
     }
 
-    public function getId(): ?Uuid
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getCreateAt(): ?\DateTimeImmutable
+    
+
+    public function getUser(): ?Users
+    {
+        return $this->user;
+    }
+
+    public function setUser(?Users $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCreateAt(): ?\DateTimeInterface
     {
         return $this->createAt;
     }
 
-    public function setCreateAt(\DateTimeImmutable $createAt): self
+    public function setCreateAt(\DateTimeInterface $createAt): self
     {
         $this->createAt = $createAt;
 
@@ -46,29 +65,29 @@ class Sale
     }
 
     /**
-     * @return Collection<int, Book>
+     * @return Collection<int, ItemSale>
      */
-    public function getBooks(): Collection
+    public function getItemSales(): Collection
     {
-        return $this->books;
+        return $this->itemSales;
     }
 
-    public function addBook(Book $book): self
+    public function addItemSale(ItemSale $itemSale): self
     {
-        if (!$this->books->contains($book)) {
-            $this->books->add($book);
-            $book->setSale($this);
+        if (!$this->itemSales->contains($itemSale)) {
+            $this->itemSales->add($itemSale);
+            $itemSale->setSale($this);
         }
 
         return $this;
     }
 
-    public function removeBook(Book $book): self
+    public function removeItemSale(ItemSale $itemSale): self
     {
-        if ($this->books->removeElement($book)) {
+        if ($this->itemSales->removeElement($itemSale)) {
             // set the owning side to null (unless already changed)
-            if ($book->getSale() === $this) {
-                $book->setSale(null);
+            if ($itemSale->getSale() === $this) {
+                $itemSale->setSale(null);
             }
         }
 

@@ -3,6 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\BookRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -10,9 +13,8 @@ use Symfony\Component\Uid\Uuid;
 class Book
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'uuid', unique: true)]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -24,11 +26,24 @@ class Book
     #[ORM\Column(length: 255)]
     private ?string $edition = null;
 
-    #[ORM\ManyToOne(inversedBy: 'books')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Sale $sale = null;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $createAt = null;
 
-    public function getId(): ?Uuid
+    #[ORM\Column]
+    private ?int $quantity = null;
+
+    #[ORM\Column]
+    private ?float $price = null;
+
+    #[ORM\OneToMany(mappedBy: 'book', targetEntity: ItemSale::class)]
+    private Collection $itemSales;
+
+    public function __construct()
+    {
+        $this->itemSales = new ArrayCollection();
+    }
+
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -38,7 +53,7 @@ class Book
         return $this->name;
     }
 
-    public function setName(string $nmae): self
+    public function setName(string $name): self
     {
         $this->name = $name;
 
@@ -69,14 +84,68 @@ class Book
         return $this;
     }
 
-    public function getSale(): ?Sale
+    public function getCreateAt(): ?\DateTimeInterface
     {
-        return $this->sale;
+        return $this->createAt;
     }
 
-    public function setSale(?Sale $sale): self
+    public function setCreateAt(\DateTimeInterface $createAt): self
     {
-        $this->sale = $sale;
+        $this->createAt = $createAt;
+
+        return $this;
+    }
+
+    public function getQuantity(): ?int
+    {
+        return $this->quantity;
+    }
+
+    public function setQuantity(int $quantity): self
+    {
+        $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    public function getPrice(): ?float
+    {
+        return $this->price;
+    }
+
+    public function setPrice(float $price): self
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ItemSale>
+     */
+    public function getItemSales(): Collection
+    {
+        return $this->itemSales;
+    }
+
+    public function addItemSale(ItemSale $itemSale): self
+    {
+        if (!$this->itemSales->contains($itemSale)) {
+            $this->itemSales->add($itemSale);
+            $itemSale->setBook($this);
+        }
+
+        return $this;
+    }
+
+    public function removeItemSale(ItemSale $itemSale): self
+    {
+        if ($this->itemSales->removeElement($itemSale)) {
+            // set the owning side to null (unless already changed)
+            if ($itemSale->getBook() === $this) {
+                $itemSale->setBook(null);
+            }
+        }
 
         return $this;
     }

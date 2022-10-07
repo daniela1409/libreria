@@ -37,30 +37,19 @@ class SaleRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+
     }
 
-//    /**
-//     * @return Sale[] Returns an array of Sale objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Sale
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+   /**
+    * @return Sale[] Returns an array of Sale objects
+    */
+   public function findAllSales(): array
+   {
+       return $this->createQueryBuilder('s')
+           ->select('u.id, u.name, u.lastname, u.createAt')
+           ->join('s.user', 'u') 
+           ->getQuery()
+           ->getResult()
+       ;
+   }
 }

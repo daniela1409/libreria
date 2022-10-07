@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UsersRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -11,9 +13,8 @@ use Symfony\Component\Uid\Uuid;
 class Users
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'uuid', unique: true)]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -31,13 +32,24 @@ class Users
     #[ORM\Column]
     private ?bool $sex = null;
 
+    #[ORM\Column(type: Types::ARRAY)]
+    private array $roles = [];
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Sale::class)]
+    private Collection $sales;
+
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $birthdayDate = null;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createAt = null;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $createAt = null;
 
-    public function getId(): ?Uuid
+    public function __construct()
+    {
+        $this->sales = new ArrayCollection();
+    }
+
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -102,6 +114,50 @@ class Users
         return $this;
     }
 
+    
+
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Sale>
+     */
+    public function getSales(): Collection
+    {
+        return $this->sales;
+    }
+
+    public function addSale(Sale $sale): self
+    {
+        if (!$this->sales->contains($sale)) {
+            $this->sales->add($sale);
+            $sale->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSale(Sale $sale): self
+    {
+        if ($this->sales->removeElement($sale)) {
+            // set the owning side to null (unless already changed)
+            if ($sale->getUser() === $this) {
+                $sale->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function getBirthdayDate(): ?\DateTimeInterface
     {
         return $this->birthdayDate;
@@ -114,12 +170,12 @@ class Users
         return $this;
     }
 
-    public function getCreateAt(): ?\DateTimeImmutable
+    public function getCreateAt(): ?\DateTimeInterface
     {
         return $this->createAt;
     }
 
-    public function setCreateAt(\DateTimeImmutable $createAt): self
+    public function setCreateAt(\DateTimeInterface $createAt): self
     {
         $this->createAt = $createAt;
 
