@@ -5,38 +5,22 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Book;
-use App\Entity\Sale;
-use App\Entity\Users;
-use App\Utils\Utils;
-use DateTime;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Services\BookImpl;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Route('/book', name: 'app_book')]
 class BookController extends AbstractController
 {
-    private $em;
-    private $required;
-    private $util;
+    private $serviceBook;
 
-    public function __construct(ManagerRegistry $em, Utils $util){
-        $this->em = $em;
-        $this->required = ["name", "author", "edition", "quantity", "price"];
-        $this->util = $util;
+    public function __construct(BookImpl $serviceBook){
+        $this->serviceBook = $serviceBook;
     }
 
     #[Route('/', name: 'find_all_books', methods:['GET'])]
     public function findAllBooks(): JsonResponse
     {
-       
-        $books = $this->em->getRepository(Book::class)->findAllBooks();
-        
-        $result = $this->util->listAll($books);
-
-        if(empty($result)){
-            $result = "No hay libros disponibles";
-        }
+        $result = $this->serviceBook->findAllBooks();
 
         return $this->json(
             $result
@@ -47,18 +31,7 @@ class BookController extends AbstractController
     public function findOneBook($bookId): JsonResponse
     {
        
-        $book = $this->em->getRepository(Book::class)->findOneBy(['id' => $bookId]);
-       
-        if(empty($book)){
-            $result = "Libro no disponible";
-        }
-        else{
-            $result = ['name' => $book->getName(),
-                    'author' => $book->getAuthor(),
-                    'edition' => $book->getEdition(),
-                    'quantity' => $book->getQuantity(),
-                    'price' => $book->getPrice() ];
-        }
+        $result = $this->serviceBook->findOneBook($bookId);
 
         return $this->json(
             $result
@@ -75,24 +48,7 @@ class BookController extends AbstractController
             $params = json_decode($content, true);
         }
         
-        $isRequired = $this->util->validateRequiredAttributes($this->required, $params);
-
-        if (!empty($isRequired)){
-            $result = $isRequired . " son requeridos";
-        }
-        else{
-            $book = new Book();
-            $book->setName($params['name']);
-            $book->setAuthor($params['author']);
-            $book->setEdition($params['edition']);
-            $book->setCreateAt(new DateTime());
-            $book->setQuantity($params['quantity']);
-            $book->setPrice($params['price']);
-
-            $this->em->getRepository(Book::class)->save($book, true);
-
-            $result = "libro guardado con exito";
-        }
+        $result = $this->serviceBook->saveBook($params);
         
         return $this->json(
             $result
@@ -109,27 +65,7 @@ class BookController extends AbstractController
             $params = json_decode($content, true);
         }
         
-        $isRequired = $this->util->validateRequiredAttributes($this->required, $params);
-        $book = $this->em->getRepository(Book::class)->findOneBy(['id' => $bookId]);
-
-        if (!empty($isRequired)){
-            $result = $isRequired . " son requeridos";
-        }
-        else if(empty($book)){
-            $result = "Libro no disponible";
-        }
-        else{
-            $book->setName($params['name']);
-            $book->setAuthor($params['author']);
-            $book->setEdition($params['edition']);
-            $book->setCreateAt(new DateTime());
-            $book->setQuantity($params['quantity']);
-            $book->setPrice($params['price']);
-
-            $this->em->getRepository(Book::class)->save($book, true);
-
-            $result = "libro editado con exito";
-        }
+       $result = $this->serviceBook->editBook($bookId, $params);
         
         return $this->json(
             $result
